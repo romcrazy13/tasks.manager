@@ -4,14 +4,14 @@ include_once ROOT . "/components/DB.php";
 
 class Tasks
 {
-    /**
-     * @return array
-     */
-    public static function getTasksList(){
+
+    public static function getTasksList($order = 'login'){
         $tasksList = array();
-        $result = getPDO()->query("SELECT * FROM `tasks` ORDER BY 'login'");
+        $query = getPDO()->prepare("SELECT * FROM `tasks` ORDER BY $order");
+        $query->bindParam(':order', $order);
+        $query->execute();
         $i = 0;
-        while ($row = $result->fetch()){
+        while ($row = $query->fetch()){
             $tasksList[$i]['id'] = $row['id'];
             $tasksList[$i]['login'] = $row['login'];
             $tasksList[$i]['email'] = $row['email'];
@@ -25,35 +25,38 @@ class Tasks
         return $tasksList;
     }
 
-    /**
-     * @param $id
-     * @return mixed
-     */
     public static function getTaskById($id){
-        $result = makeDBH()->query("SELECT * FROM users WHERE id = '" . $id . "'");
-        $result->setFetchMode(PDO::FETCH_ASSOC);
-        return $result->fetch();
+        $tasks = array();
+        $query = getPDO()->prepare("SELECT * FROM `tasks` WHERE `id` = :id ");
+        $query->bindParam(':id', $id);
+        $query->execute();
+        $i = 0;
+        while ($row = $query->fetch()){
+            $tasks[$i]['id'] = $row['id'];
+            $tasks[$i]['login'] = $row['login'];
+            $tasks[$i]['email'] = $row['email'];
+            $tasks[$i]['title'] = $row['title'];
+            $tasks[$i]['task'] = $row['task'];
+            $tasks[$i]['image'] = $row['image'];
+            $i++;
+        }
+        return $tasks;
     }
 
-    /**
-     * @param $login
-     * @param $password
-     * @param $email
-     * @return string
-     */
-    public function addTask($title, $task, $image){
+    public static function addTask($login, $email, $title, $task, $image){
         try{
-            $stmt = getPDO()->prepare("INSERT INTO tasks (`title`, `task`, `image`) VALUES (:login, :password, :email)");
-            $stmt->bindParam(':login', $login);
-            $stmt->bindParam(':password', $password);
-            $stmt->bindParam(':email', $email);
-            $stmt->execute();
-            return getDBH()->lastInsertId();
+            $query = getPDO()->prepare("INSERT INTO `tasks` (`login`, `email`, `title`, `task`, `image`, `complete`, `dateCreate`)
+                                                     VALUES ('$login',  '$email',  :title,  :task,  :image,  NULL,       NOW())");
+            $query->bindParam(':title', $title);
+            $query->bindParam(':task', $task);
+            $query->bindParam(':image', $image);
+            $query->execute();
+            unset($_POST['title']);
         } catch (PDOException $e) {
-            echo "<p class=\"text-danger h4\">Ошибка добавления записи в таблицу 'users'</p>" . $e->getMessage();
+            $_SESSION['error'] = print_r($query) . "<br><br>";
+            $_SESSION['error'] .= "Ошибка добавления записи в таблицу 'users'<br>" . $e->getMessage();
         }
     }
-
 
     public function editTask($id, $login, $password, $email){
         try{
@@ -72,8 +75,19 @@ class Tasks
         }
     }
 
-    public function deleteUser($id, $login, $password, $email){
-
+    public static function removeTask($id){
+        $query = getPDO()->prepare("DELETE FROM `tasks` WHERE `id` = :id");
+        $query->bindParam(':id', $id);
+        $query->execute();
     }
+
+    public static function getImageById($id){
+        $query = getPDO()->prepare("SELECT `image` FROM `tasks` WHERE `id` = :id");
+        $query->bindParam(':id', $id);
+        $query->execute();
+        $row = $query->fetch();
+        return $row['image'];
+    }
+
 
 }

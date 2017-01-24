@@ -1,5 +1,9 @@
 <?php
 
+function alert($message) {
+    echo "<script> alert(\"$message\"); </script>";
+}
+
 function checkDB(){
     if (!($error = tryLinkDB())){
         if (!($error = checkTableUsers())){
@@ -19,7 +23,7 @@ function getPDO(){
         );
         $pdo = new PDO($dsn, USER, PASSWORD, $opt);
     } catch (PDOException $e) {
-        return "<p>Ошибка подключения к базе данных</p>" . $e->getMessage();
+        $_SESSION['error'] = "Ошибка подключения к базе данных<br>" . $e->getMessage();
     }
     return $pdo;
 }
@@ -30,14 +34,14 @@ function tryLinkDB(){
     try {
         $dbh = new PDO("mysql:host=" . HOST, USER, PASSWORD);
     } catch (PDOException $e) {
-        return "<p>Ошибка подключения к хосту</p>" . $e->getMessage();
+        $_SESSION['error'] = "Ошибка подключения к хосту<br>" . $e->getMessage();
     }
     if (!isExistsDB()){
         // При отсутствии DB создается новая
         try {
             $dbh->exec("CREATE DATABASE IF NOT EXISTS `" . DB . "` DEFAULT CHARSET=utf8 COLLATE utf8_general_ci");
         } catch (PDOException $e) {
-            return "<p>Ошибка при создании базы данных</p>" . $e->getMessage();
+            $_SESSION['error'] = "Ошибка при создании базы данных<br>" . $e->getMessage();
         }
     }
 }
@@ -48,7 +52,7 @@ function isExistsDB(){
         $dbh = new PDO("mysql:host=" . HOST, USER, PASSWORD);
         $dbs = $dbh->query('SHOW DATABASES');
     } catch (PDOException $e) {
-        return "<p>Ошибка запроса списка таблиц</p>" . $e->getMessage();
+        $_SESSION['error'] = "Ошибка запроса списка таблиц<br>" . $e->getMessage();
     }
     while (($x = $dbs->fetchColumn(0)) !== false) {
         if ($x == DB) {
@@ -84,7 +88,7 @@ function checkTableUsers(){
         try {
             getPDO()->exec("CREATE TABLE IF NOT EXISTS `users` $columns");
         } catch (PDOException $e) {
-            return "<p>Ошибка при создании таблицы 'users'</p>" . $e->getMessage();
+            $_SESSION['error'] = "Ошибка при создании таблицы 'users'<br>" . $e->getMessage();
         }
         $sql = "INSERT INTO users (`login`, `password`, `email`, `dateCreate`, `dateVisited`)
                     VALUES ('" . ADMIN_LOGIN . "',
@@ -96,7 +100,7 @@ function checkTableUsers(){
             $stm = getPDO()->prepare($sql);
             $stm->execute();
         } catch (PDOException $e) {
-            return "<p>Ошибка добавления записи в таблицу 'users'</p>" . $e->getMessage();
+            $_SESSION['error'] = "Ошибка добавления записи в таблицу 'users'<br>" . $e->getMessage();
         }
     }
 }
@@ -116,7 +120,7 @@ function checkTableTasks(){
         try {
             getPDO()->exec("CREATE TABLE IF NOT EXISTS `tasks` $columns");
         } catch (PDOException $e) {
-            return "<p>Ошибка при создании таблицы 'tasks'</p>" . $e->getMessage();
+            $_SESSION['error'] = "Ошибка при создании таблицы 'tasks'<br>" . $e->getMessage();
         }
     }
 }

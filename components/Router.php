@@ -1,5 +1,8 @@
 <?php
 
+if (isset($_SESSION['error'])){echo "<p class=\"text-danger h4\">" . $_SESSION['error'] . "<p>";}
+unset($_SESSION['error']);
+
 class Router
 {
     private $routes;
@@ -9,7 +12,7 @@ class Router
         $this->routes = include($routesPath);
     }
 
-    private function getURI(){
+    public static function getURI(){
         if (!empty($_SERVER['REQUEST_URI'])){
             return trim($_SERVER['REQUEST_URI'], '/');
         }
@@ -31,9 +34,9 @@ class Router
         }
         unset($segments);
 
+        if ($uri == ''){$uri = "#root";}
         foreach ($this->routes as $uriPattern => $path){
             if (preg_match( "~$x~", $uriPattern)){
-//                echo "<br>$uriPattern => $path<br>";
                 $segmentsPath = preg_split("~/~", $path);
                 $controllerName = ucfirst($segmentsPath[0]) . 'Controller';
                 $actionName = 'action' . ucfirst($segmentsPath[1]);
@@ -48,18 +51,13 @@ class Router
                     $controllerObject = new $controllerName;
 
                     if (isset($params)){
-                        $result = call_user_func_array(array($controllerObject, $actionName), $params);
+                        call_user_func_array(array($controllerObject, $actionName), $params);
                     }else{
-                        $result = $controllerObject -> $actionName();
-                    }
-
-                    if ($result != NULL){
-                        echo "<br><b><h3>!!!_OK_!!!</h3></b><br>";
+                        $controllerObject -> $actionName();
                     }
                 }
                 break;
             }
         }
-
    }
 }

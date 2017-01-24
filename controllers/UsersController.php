@@ -5,8 +5,6 @@ include_once ROOT . '/models/Users.php';
 class UsersController
 {
     public function actionIndex(){
-//        echo '<br>Class UsersController, method actionIndex';
-
         $users = Users::getUsersList();
         require_once(ROOT . '/views/users/index.php');
     }
@@ -32,23 +30,43 @@ class UsersController
         if (!isset($_POST['login'])) {
             require_once(ROOT . '/views/users/add.php');
         }else{
-            echo 'actionAdd<br>';
-            if ($_POST['password'] == $_POST['confirm-password']) {
-                Users::addUser($_POST['login'], $_POST['email'], $_POST['password']);
+            if (trim($_POST['password']) == trim($_POST['confirm-password'])) {
+                Users::addUser(trim($_POST['login']), trim($_POST['email']), trim($_POST['password']));
             }else {
-                echo "<p>Пароли должны быть одинаковы!</p>";
-                return "<p>Пароли должны быть одинаковы!</p>";
+                $_SESSION['error'] = "Пароли должны быть одинаковы!";
             }
             unset($_POST['login']);
+            header("Location: /");
         }
+    }
+
+    public function actionLogin(){
+        if (!isset($_POST['login'])) {
+            require_once(ROOT . '/views/users/login.php');
+        }else{
+            if (Users::loginUser($_POST['login'], $_POST['password'])){
+                Users::updateVisitedDate($_SESSION['userid']);
+            }
+            unset($_POST['login']);
+            header("Location: /");
+        }
+    }
+
+    public function actionCansel(){
+        unset($_SESSION['user']);
+        unset($_SESSION['userid']);
+        header("Location: / ");
     }
 
     public function actionEdit(){
         require_once(ROOT . '/views/users/edit.php');
     }
 
-    public function actionDelete(){
-        require_once(ROOT . '/views/users/delete.php');
+    public function actionRemove($id){
+        if ($_SESSION['user'] == 'admin') {
+            Users::removeUser($id);
+            $this->actionIndex();
+        }
     }
 
 }

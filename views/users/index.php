@@ -10,7 +10,9 @@
             <th>Электронная почта</th>
             <th>Зарегестрирован</th>
             <th>Последнее посещение</th>
-            <th>Возможные действия</th>
+            <?php if ($_SESSION['user'] == 'admin'){ ?>
+                <th>Возможные действия</th>
+            <?php } ?>
         </tr>
         </thead>
         <tbody>
@@ -20,7 +22,9 @@
                 <td><?php echo $user['email'] ?></td>
                 <td><?php echo $user['dateCreate'] ?></td>
                 <td><?php echo $user['dateVisited'] ?></td>
-                <td><p class="links"><a class="btn btn-default" href="#" role="button" href="/users/view/<?php echo $user['id'] ?>">Удалить</a></p></td>
+                <?php if ($_SESSION['user'] == 'admin'){ ?>
+                    <td><input type="button" value="Удалить" onclick="if(confirm('Вы действительно желаете удалить пользователя?'))location.href='/user/remove/<?php echo $user['id'] ?>';"></td>
+                <?php } ?>
             </tr>
         <?php endforeach; ?>
         </tbody>
